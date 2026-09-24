@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ParkSmaht — Boston Parking, Right Now</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Design tokens — from "Parking spot finder app" design file */
+  :root {
+    --ink: #14130F;
+    --muted: #6B675E;
+    --faint: #8A857A;
+    --bg: #EDE9DF;
+    --paper: #F4F1EA;
+    --card: #FBF9F4;
+    --line: #DCD6C8;
+    --blue: #2F4BFF;
+    --blue-soft: #9FB2FF;
+    --red: #C8412B;
+    --red-bg: #F6E2DD;
+    --green: #2E7D4F;
+    --green-bg: #E2EDDC;
+    --orange: #D9822B;
+    --map-land: #E6E1D5;
+    --map-water: #BFD3DA;
+    --map-park: #C9D8B6;
+    --map-road: #FBF9F4;
+    --font-ui: 'Geist', -apple-system, system-ui, sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: var(--font-ui); color: var(--ink); background: var(--bg); }
+  @keyframes pulse { 0% { transform: translate(-50%,-50%) scale(.6); opacity:.7 } 100% { transform: translate(-50%,-50%) scale(2.6); opacity:0 } }
+
+  #app { display: flex; height: 100%; overflow: hidden; }
+
+  /* ---------- Fake map (self-contained, design-file style) ---------- */
+  #map { flex: 1; height: 100%; position: relative; overflow: hidden; background: var(--map-land); }
+  .m-water, .m-park, .m-road, .m-zone, .m-label { position: absolute; }
+  .m-water { background: var(--map-water); }
+  .m-park { background: var(--map-park); border-radius: 8px; }
+  .m-road { background: var(--map-road); }
+  .m-zone { border: 2px dashed var(--orange); border-radius: 12px; background: rgba(217,130,43,.08); }
+  .m-label { font: 600 10px var(--font-mono); letter-spacing: .1em; color: #A39D8F; text-transform: uppercase; white-space: nowrap; }
+  .m-label.water { color: #7FA0AE; }
+  .m-label.zone { color: #A35F18; }
+
+  .user-dot { position: absolute; z-index: 300; }
+  .user-dot .ring { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: var(--blue); animation: pulse 1.8s ease-out infinite; }
+  .user-dot .core { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--blue); border: 3px solid #FFF; transform: translate(-50%,-50%); box-shadow: 0 2px 6px rgba(47,75,255,.5); }
+
+  /* Design-style pins: [P] price chip with tail */
+  .fake-pin {
+    position: absolute; transform: translate(-50%,-100%); cursor: pointer; z-index: 400;
+    border: 0; background: transparent; padding: 0;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .fake-pin:hover, .fake-pin.selected { z-index: 500; }
+  .fake-pin .chip {
+    display: flex; align-items: center; gap: 5px; padding: 5px 8px 5px 5px;
+    border-radius: 11px; background: #FFF; color: var(--ink);
+    font: 600 12px var(--font-mono); box-shadow: 0 4px 10px rgba(20,19,15,.18); white-space: nowrap;
+  }
+  .fake-pin.selected .chip { outline: 2.5px solid var(--blue); }
+  .fake-pin .chip .badge {
+    width: 18px; height: 18px; border-radius: 6px; color: #FFF;
+    font: 800 11px var(--font-display);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fake-pin .tail { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid #FFF; }
+  .b-ok { background: var(--green); }
+  .b-no { background: var(--red); }
+  .b-unknown { background: #B8B2A5; }
+
+  .map-attrib {
+    position: absolute; bottom: 4px; right: 10px; z-index: 200;
+    font: 500 10px var(--font-mono); color: var(--faint);
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px; pointer-events: none;
+  }
+  header > * { pointer-events: auto; }
+  .brand {
+    background: var(--ink); color: #FFF; font: 800 15px var(--font-display);
+    padding: 10px 14px; border-radius: 16px; white-space: nowrap;
+    box-shadow: 0 6px 18px rgba(20,19,15,.18);
+  }
+  .brand span { color: var(--blue-soft); }
+  .search {
+    flex: 1; max-width: 420px; display: flex; align-items: center; gap: 10px;
+    background: #FFF; border-radius: 16px; padding: 0 8px 0 14px; height: 46px;
+    box-shadow: 0 6px 18px rgba(20,19,15,.12);
+  }
+  .search input { border: 0; outline: none; flex: 1; font: 500 15px var(--font-ui); background: transparent; color: var(--ink); min-width: 0; }
+  .search input::placeholder { color: var(--faint); }
+
+  /* ---------- Context banner (design: weather advisory pill) ---------- */
+  #context-banner {
+    position: absolute; top: 66px; left: 50%; transform: translateX(-50%); z-index: 1000;
+    background: var(--ink); color: #FFF; padding: 9px 16px; border-radius: 14px;
+    font: 500 13px var(--font-ui); box-shadow: 0 8px 20px rgba(20,19,15,.3);
+    display: none; align-items: center; gap: 8px; white-space: nowrap;
+    pointer-events: none;
+  }
+  #context-banner.emergency { background: var(--red); }
+
+  /* ---------- Demo controls ---------- */
+  #demo-controls {
+    position: absolute; bottom: 18px; left: 14px; z-index: 1000;
+    background: var(--card); border-radius: 18px; padding: 14px;
+    box-shadow: 0 10px 26px rgba(20,19,15,.16); width: 256px; font-size: 13px;
+  }
+  #demo-controls h3 { font: 800 11px var(--font-display); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+  #demo-controls h3 b { color: var(--ink); font: 600 11px var(--font-mono); }
+  #demo-controls label { display: flex; align-items: center; justify-content: space-between; margin: 7px 0; gap: 8px; color: var(--muted); font-weight: 500; }
+  #demo-controls input[type=range] { width: 128px; accent-color: var(--blue); }
+  #demo-controls select { font: 500 12px var(--font-ui); padding: 4px 6px; border-radius: 8px; border: 1px solid var(--line); background: #FFF; color: var(--ink); }
+  .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle .slider { position: absolute; inset: 0; background: var(--line); border-radius: 22px; cursor: pointer; transition: .2s; }
+  .toggle .slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #FFF; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(20,19,15,.25); }
+  .toggle input:checked + .slider { background: var(--blue); }
+  .toggle input:checked + .slider:before { transform: translateX(16px); }
+  .wx-badge { font: 600 11px var(--font-mono); padding: 3px 8px; border-radius: 999px; background: var(--paper); color: var(--ink); }
+
+  .legend {
+    position: absolute; bottom: 18px; right: 14px; z-index: 1000;
+    background: var(--card); border-radius: 14px; padding: 10px 12px;
+    font: 500 12px var(--font-ui); color: var(--muted);
+    box-shadow: 0 6px 18px rgba(20,19,15,.14);
+  }
+  .legend div { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .legend i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+
+  /* ---------- Detail panel ---------- */
+  #panel {
+    width: 400px; max-width: 100%; background: var(--bg); height: 100%;
+    box-shadow: -8px 0 30px rgba(20,19,15,.14); z-index: 1100;
+    display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform .28s ease; position: relative;
+  }
+  #panel.open { transform: translateX(0); }
+  #panel-scroll { overflow-y: auto; flex: 1; padding: 18px; padding-top: 10px; }
+  .drag-handle { display: none; }
+  #panel-close {
+    position: absolute; top: 14px; right: 14px; z-index: 5;
+    background: var(--paper); border: 1px solid var(--line); width: 34px; height: 34px; border-radius: 50%;
+    font-size: 15px; cursor: pointer; color: var(--muted);
+  }
+
+  .spot-name { font: 800 22px var(--font-display); margin: 14px 46px 4px 0; letter-spacing: -.01em; }
+  .spot-sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .badge-verified { background: var(--ink); color: #FFF; font: 600 10px var(--font-mono); letter-spacing: .05em; padding: 3px 9px; border-radius: 999px; }
+  .badge-source { background: var(--paper); border: 1px solid var(--line); color: var(--muted); font: 500 11px var(--font-ui); padding: 3px 9px; border-radius: 999px; }
+
+  .verdict { border-radius: 18px; padding: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px; }
+  .verdict.ok { background: var(--green-bg); }
+  .verdict.no { background: var(--red-bg); }
+  .verdict .icon {
+    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #FFF; font: 800 22px var(--font-display);
+  }
+  .verdict.ok .icon { background: var(--green); }
+  .verdict.no .icon { background: var(--red); }
+  .verdict .title { font: 800 17px var(--font-display); text-transform: uppercase; letter-spacing: .01em; }
+  .verdict.ok .title { color: var(--green); }
+  .verdict.no .title { color: var(--red); }
+  .verdict .why { font-size: 13px; color: var(--ink); margin-top: 3px; line-height: 1.45; }
+
+  /* Parking sign */
+  .sign-wrap { display: flex; gap: 14px; margin-bottom: 14px; }
+  .sign {
+    flex-shrink: 0; width: 132px; border: 2px solid var(--ink); border-radius: 8px;
+    background: #FFF; padding: 10px 8px; text-align: center;
+    font-family: "Arial Narrow", Arial, sans-serif; box-shadow: 3px 4px 0 rgba(20,19,15,.15);
+  }
+  .sign .s-block { padding: 6px 2px; border-bottom: 1px dashed var(--line); }
+  .sign .s-block:last-child { border-bottom: none; }
+  .sign .s-red { color: #C8412B; font-weight: 800; }
+  .sign .s-green { color: #2E7D4F; font-weight: 800; }
+  .sign .s-big { font-size: 20px; letter-spacing: .02em; }
+  .sign .s-med { font-size: 13px; font-weight: 700; }
+  .sign .s-small { font-size: 10.5px; font-weight: 600; color: var(--muted); }
+  .sign-caption { font: 500 10px var(--font-mono); color: var(--faint); text-align: center; margin-top: 6px; }
+  .rules-list { flex: 1; font-size: 13px; }
+  .rules-list li { margin: 0 0 8px 16px; color: var(--muted); }
+  .rules-list .active-rule { font-weight: 700; color: var(--ink); }
+
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .fact { background: var(--card); border-radius: 14px; padding: 11px 13px; }
+  .fact .k { font: 600 9.5px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
+  .fact .v { font: 700 15px var(--font-ui); margin-top: 3px; }
+  .fact .v small { font-weight: 500; color: var(--muted); }
+
+  .meters { background: var(--card); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+  .meter-row { display: flex; align-items: center; gap: 10px; margin: 7px 0; font-size: 13px; }
+  .meter-row .lbl { width: 92px; color: var(--muted); flex-shrink: 0; font-weight: 500; }
+  .meter { flex: 1; height: 7px; background: var(--bg); border-radius: 999px; overflow: hidden; }
+  .meter > div { height: 100%; border-radius: 999px; }
+
+  .vote-box { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 16px; padding: 13px 14px; margin-bottom: 14px; }
+  .vote-box .q { flex: 1; font-size: 13px; font-weight: 600; }
+  .vote-box .q small { color: var(--faint); font-weight: 500; }
+  .vote-btn {
+    border: 1.5px solid var(--line); background: #FFF; border-radius: 12px;
+    padding: 8px 13px; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: .15s;
+  }
+  .vote-btn span { font: 600 13px var(--font-mono); }
+  .vote-btn.voted-up { border-color: var(--green); background: var(--green-bg); }
+  .vote-btn.voted-down { border-color: var(--red); background: var(--red-bg); }
+
+  .section-h { font: 800 12px var(--font-display); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 18px 0 8px; }
+  .ai-summary { background: var(--ink); color: #EDE9DF; border-radius: 16px; padding: 14px; font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
+  .ai-summary .tag { font: 600 10px var(--font-mono); letter-spacing: .1em; color: var(--blue-soft); margin-bottom: 6px; text-transform: uppercase; }
+  .review { border-bottom: 1px solid var(--line); padding: 11px 0; font-size: 13px; }
+  .review:last-child { border-bottom: none; }
+  .review .who { font-weight: 700; font-size: 12px; }
+  .review .stars { color: var(--orange); letter-spacing: 1px; }
+  .review div { color: var(--muted); margin-top: 2px; }
+
+  /* No-data / upload flow */
+  .nodata { text-align: center; padding: 26px 10px; }
+  .nodata .cam {
+    width: 64px; height: 64px; border-radius: 20px; background: var(--ink); margin: 0 auto;
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .nodata h3 { margin: 14px 0 6px; font: 800 18px var(--font-display); }
+  .nodata p { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 1.5; }
+  .btn-primary {
+    background: var(--blue); color: #FFF; border: 0; border-radius: 16px;
+    padding: 13px 22px; font: 700 15px var(--font-ui); cursor: pointer;
+    box-shadow: 0 8px 20px rgba(47,75,255,.35);
+  }
+  .parse-steps { text-align: left; margin: 20px auto 0; max-width: 280px; }
+  .parse-step { display: flex; align-items: center; gap: 10px; margin: 11px 0; font-size: 13px; color: var(--faint); opacity: .4; transition: .3s; }
+  .parse-step.on { opacity: 1; color: var(--ink); }
+  .parse-step .dot {
+    width: 24px; height: 24px; border-radius: 8px; background: var(--paper); border: 1px solid var(--line); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font: 600 12px var(--font-mono);
+  }
+  .parse-step.on .dot { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .spinner { width: 13px; height: 13px; border: 2px solid var(--line); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Responsive: mobile bottom sheet ---------- */
+  @media (max-width: 768px) {
+    #app { flex-direction: column; }
+    #panel {
+      position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: 100%;
+      height: 74%; border-radius: 24px 24px 0 0;
+      transform: translateY(105%); transition: transform .3s ease;
+      box-shadow: 0 -10px 34px rgba(20,19,15,.28);
+    }
+    #panel.open { transform: translateY(0); }
+    .drag-handle { display: block; width: 44px; height: 5px; border-radius: 999px; background: var(--line); margin: 10px auto 0; }
+    #demo-controls { width: auto; left: 10px; right: 10px; bottom: 10px; padding: 10px 12px; }
+    #demo-controls label { margin: 4px 0; }
+    .legend { display: none; }
+    header { padding: 8px 10px; }
+    .brand { font-size: 13px; padding: 8px 11px; }
+    #context-banner { top: 58px; font-size: 12px; max-width: 92%; white-space: normal; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="map">
+    <!-- Stylized Boston basemap, design-file style: no tile servers, works offline -->
+    <!-- Charles River -->
+    <div class="m-water" style="left:-6%; top:2%; width:75%; height:13%; transform:rotate(-13deg); border-radius:0 0 60px 0;"></div>
+    <div class="m-water" style="left:-10%; top:12%; width:34%; height:30%; transform:skewY(-18deg); border-radius:0 40px 40px 0;"></div>
+    <!-- Harbor -->
+    <div class="m-water" style="right:-10%; top:-12%; width:40%; height:52%; border-radius:0 0 0 45%;"></div>
+    <div class="m-water" style="right:-4%; top:30%; width:18%; height:34%; border-radius:30px 0 0 30px;"></div>
+    <!-- Fort Point Channel -->
+    <div class="m-water" style="left:63%; top:38%; width:5%; height:28%; transform:rotate(14deg); border-radius:12px;"></div>
+    <!-- Parks -->
+    <div class="m-park" style="left:44%; top:44%; width:11%; height:11%;"></div>
+    <div class="m-park" style="left:38%; top:50%; width:7%; height:8%;"></div>
+    <div class="m-park" style="left:6%; top:74%; width:10%; height:11%;"></div>
+    <div class="m-park" style="left:24%; top:88%; width:16%; height:7%;"></div>
+    <!-- Roads -->
+    <div class="m-road" style="left:0; right:0; top:63%; height:14px;"></div>
+    <div class="m-road" style="left:0; right:0; top:80%; height:10px;"></div>
+    <div class="m-road" style="left:-2%; top:52%; width:60%; height:12px; transform:rotate(-8deg);"></div>
+    <div class="m-road" style="top:0; bottom:0; left:30%; width:10px;"></div>
+    <div class="m-road" style="top:0; bottom:0; left:52%; width:13px;"></div>
+    <div class="m-road" style="top:8%; bottom:0; left:72%; width:10px; transform:rotate(9deg);"></div>
+    <!-- Resident permit zone (design's dashed-zone motif) -->
+    <div class="m-zone" style="left:42%; top:32%; width:15%; height:17%;"></div>
+    <div class="m-label zone" style="left:43.5%; top:33.5%;">Permit zone</div>
+    <!-- Labels -->
+    <div class="m-label water" style="left:14%; top:16%; transform:rotate(-13deg);">Charles River</div>
+    <div class="m-label water" style="right:6%; top:18%;">Boston Harbor</div>
+    <div class="m-label" style="left:26%; top:62%;">Back Bay</div>
+    <div class="m-label" style="left:46%; top:26%;">Beacon Hill</div>
+    <div class="m-label" style="left:60%; top:24%;">North End</div>
+    <div class="m-label" style="left:68%; top:58%;">Seaport</div>
+    <div class="m-label" style="left:9%; top:64%;">Fenway</div>
+    <div class="m-label" style="left:78%; top:88%;">South Boston</div>
+    <div class="m-label" style="left:50%; top:8%;">Charlestown</div>
+    <div class="m-label" style="left:33%; top:78%;">South End</div>
+    <div class="m-label" style="left:45%; top:47.5%; color:#8CA06E;">Common</div>
+    <!-- You are here -->
+    <div class="user-dot" style="left:42%; top:57%;"><div class="ring"></div><div class="core"></div></div>
+    <div class="map-attrib">demo basemap · not to scale</div>
+  </div>
+
+  <header>
+    <div class="brand">Park<span>Smaht</span></div>
+    <div class="search">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#14130F" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+      <input id="search-input" type="text" placeholder="Where are you going? (try: Fenway, North End)">
+    </div>
+  </header>
+
+  <div id="context-banner"></div>
+
+  <div id="demo-controls">
+    <h3>Demo controls · <b id="clock"></b> <b id="day-label"></b></h3>
+    <label>Time of day <input id="time-slider" type="range" min="0" max="1439" step="15"></label>
+    <label>Day
+      <select id="day-select">
+        <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option>
+        <option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+        <option value="0">Sunday</option>
+      </select>
+    </label>
+    <label>Snow emergency
+      <span class="toggle"><input id="snow-toggle" type="checkbox"><span class="slider"></span></span>
+    </label>
+    <label>Weather <span class="wx-badge" id="wx-badge">58°F · Clear</span></label>
+  </div>
+
+  <div class="legend">
+    <div><i style="background:var(--green)"></i> Park now</div>
+    <div><i style="background:var(--red)"></i> Don't park</div>
+    <div><i style="background:#B8B2A5"></i> No data — add a sign</div>
+  </div>
+
+  <aside id="panel">
+    <div class="drag-handle"></div>
+    <button id="panel-close" aria-label="Close">✕</button>
+    <div id="panel-scroll"></div>
+  </aside>
+</div>
+
+<script>
+/* =========================================================
+   ParkSmaht — hackathon demo
+   Mock data + client-side rule engine. No backend, no tiles.
+   ========================================================= */
+
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+// Rule types (what the "Claude sign parser" produces); times = minutes from midnight
+const SPOTS = [
+  {
+    id: 'newbury', name: 'Newbury St @ Exeter St', area: 'Back Bay',
+    lat: 42.3502, lng: -71.0810, verified: true, source: 'Crowd + BTD sign photo',
+    agrees: 214, disagrees: 9,
+    difficulty: 0.9, safety: 0.85, walkability: 0.95, transitNote: '3 min to Copley (Green)',
+    rules: [
+      { type:'meter', days:[1,2,3,4,5,6], start:480, end:1200, ratePerHr:3.75, maxHours:2 },
+      { type:'street_cleaning', days:[2], weeks:[1,3], start:480, end:720, side:'even side' },
+      { type:'snow_route' },
+    ],
+    sign: [
+      { cls:'s-red s-big', text:'2 HOUR' }, { cls:'s-med', text:'METERED PARKING' },
+      { cls:'s-small', text:'8AM – 8PM MON–SAT' },
+      { cls:'s-red s-med', text:'NO PARKING' }, { cls:'s-small', text:'STREET CLEANING · 1st & 3rd TUE 8AM–12PM' },
+    ],
+    reviews: [
+      { who:'Maya R.', stars:4, text:'Scored a spot at 9am on a weekday, meter app worked fine.' },
+      { who:'Dan K.', stars:2, text:'Circled for 25 min on Saturday afternoon. Good luck.' },
+      { who:'Priya S.', stars:5, text:'Free after 8pm and Sundays — dinner parking hack.' },
+    ],
+    aiSummary: 'Users say weekday mornings are workable but Saturday afternoons are brutal. Free after 8 PM and on Sundays. Watch for street cleaning on 1st/3rd Tuesdays.',
+  },
+  {
+    id: 'beaconhill', name: 'Myrtle St, Beacon Hill', area: 'Beacon Hill',
+    lat: 42.3593, lng: -71.0662, verified: false, source: 'Crowd (3 sign photos)',
+    agrees: 87, disagrees: 21,
+    difficulty: 0.95, safety: 0.9, walkability: 0.9, transitNote: '7 min to Park St (Red/Green)',
+    rules: [
+      { type:'resident_only', permit:'Beacon Hill Resident Permit', days:[0,1,2,3,4,5,6], start:0, end:1440 },
+      { type:'snow_route' },
+    ],
+    sign: [
+      { cls:'s-red s-med', text:'RESIDENT PERMIT' }, { cls:'s-med', text:'PARKING ONLY' },
+      { cls:'s-small', text:'AT ALL TIMES' }, { cls:'s-small', text:'BEACON HILL STICKER REQUIRED' },
+      { cls:'s-red s-small', text:'TOW ZONE' },
+    ],
+    reviews: [
+      { who:'Tom W.', stars:1, text:'Got towed here without a sticker. $150 mistake.' },
+      { who:'Elena G.', stars:4, text:'Fine if you have the resident permit, spots open up after 9am.' },
+    ],
+    aiSummary: 'Resident permit strictly enforced 24/7 — multiple towing reports from visitors. Only park here with a Beacon Hill sticker.',
+  },
+  {
+    id: 'northend', name: 'Hanover St @ Prince St', area: 'North End',
+    lat: 42.3647, lng: -71.0542, verified: true, source: 'Owner-verified (Bova\'s Bakery)',
+    agrees: 156, disagrees: 12,
+    difficulty: 0.98, safety: 0.88, walkability: 0.97, transitNote: '6 min to Haymarket (Green/Orange)',
+    rules: [
+      { type:'meter', days:[1,2,3,4,5,6], start:480, end:1200, ratePerHr:2.50, maxHours:2 },
+      { type:'no_parking', reason:'Loading zone', days:[1,2,3,4,5], start:360, end:660 },
+      { type:'snow_route' },
+    ],
+    sign: [
+      { cls:'s-red s-med', text:'NO PARKING' }, { cls:'s-small', text:'LOADING ZONE · 6AM–11AM MON–FRI' },
+      { cls:'s-green s-big', text:'2 HR' }, { cls:'s-med', text:'METER PARKING' }, { cls:'s-small', text:'8AM–8PM MON–SAT' },
+    ],
+    reviews: [
+      { who:'Gina T.', stars:3, text:'Loading zone in the morning — read the sign or get tagged.' },
+      { who:'Alex M.', stars:2, text:'Feast weekends? Forget it. Take the T.' },
+    ],
+    aiSummary: 'Hardest parking in the city per users. Morning loading zone catches people out. Locals strongly recommend the T on weekends and during feasts.',
+  },
+  {
+    id: 'seaport', name: 'Seaport Blvd @ Sleeper St', area: 'Seaport',
+    lat: 42.3529, lng: -71.0480, verified: false, source: 'Crowd (1 sign photo)',
+    agrees: 43, disagrees: 5,
+    difficulty: 0.6, safety: 0.92, walkability: 0.85, transitNote: '5 min to Courthouse (Silver)',
+    rules: [
+      { type:'meter', days:[1,2,3,4,5], start:480, end:1080, ratePerHr:2.00, maxHours:4 },
+      { type:'snow_route' },
+    ],
+    sign: [
+      { cls:'s-green s-big', text:'4 HOUR' }, { cls:'s-med', text:'METERED PARKING' },
+      { cls:'s-small', text:'8AM–6PM MON–FRI' }, { cls:'s-small', text:'FREE NIGHTS & WEEKENDS' },
+    ],
+    reviews: [
+      { who:'Jordan L.', stars:5, text:'Easiest street parking downtown-ish. Free on weekends!' },
+    ],
+    aiSummary: 'Best value spot in the dataset: 4-hour meters, free nights and weekends, and users report reliably open spaces.',
+  },
+  {
+    id: 'fenway', name: 'Boylston St @ Ipswich St', area: 'Fenway',
+    lat: 42.3452, lng: -71.0951, verified: false, source: 'Crowd (2 sign photos)',
+    agrees: 61, disagrees: 30,
+    difficulty: 0.7, safety: 0.8, walkability: 0.88, transitNote: '4 min to Hynes (Green)',
+    rules: [
+      { type:'meter', days:[1,2,3,4,5,6], start:480, end:1200, ratePerHr:2.50, maxHours:2 },
+      { type:'no_parking', reason:'Red Sox game-day tow zone', days:[0,1,2,3,4,5,6], start:1020, end:1439, gameDay:true },
+      { type:'snow_route' },
+    ],
+    sign: [
+      { cls:'s-green s-big', text:'2 HR' }, { cls:'s-med', text:'METER PARKING' }, { cls:'s-small', text:'8AM–8PM MON–SAT' },
+      { cls:'s-red s-med', text:'TOW ZONE' }, { cls:'s-small', text:'RED SOX GAME DAYS AFTER 5PM' },
+    ],
+    reviews: [
+      { who:'Sam B.', stars:1, text:'Towed on a game day. The sign is tiny. This app would\'ve saved me $180.' },
+      { who:'Nina P.', stars:4, text:'Great non-game days. Check the Sox schedule first!' },
+    ],
+    aiSummary: 'Fine on normal days, dangerous on Red Sox game days — several towing reports after 5 PM. The verdict here factors in the game schedule.',
+  },
+  {
+    id: 'southie', name: 'E Broadway @ L St', area: 'South Boston',
+    lat: 42.3358, lng: -71.0329, verified: false, source: 'Crowd (5 sign photos)',
+    agrees: 92, disagrees: 8,
+    difficulty: 0.5, safety: 0.87, walkability: 0.8, transitNote: '12 min bus to Broadway (Red)',
+    rules: [
+      { type:'time_limit', hours:2, days:[1,2,3,4,5], start:480, end:1080 },
+      { type:'street_cleaning', days:[5], weeks:[1,3], start:720, end:960, side:'odd side' },
+      { type:'snow_route' },
+    ],
+    sign: [
+      { cls:'s-green s-big', text:'2 HOUR' }, { cls:'s-med', text:'PARKING' }, { cls:'s-small', text:'8AM–6PM MON–FRI' },
+      { cls:'s-red s-med', text:'NO PARKING' }, { cls:'s-small', text:'STREET CLEANING 1st & 3rd FRI 12–4PM' },
+    ],
+    reviews: [
+      { who:'Kate D.', stars:5, text:'Free and usually open. Southie hidden gem.' },
+      { who:'Mike O.', stars:3, text:'Got a street cleaning ticket — first Friday of the month, beware.' },
+    ],
+    aiSummary: 'Free 2-hour parking that\'s usually available. The only trap is 1st/3rd Friday street cleaning — that\'s where all the tickets come from.',
+  },
+  // No-data spots — demo the "upload a sign" flow
+  { id: 'charlestown', name: 'Main St @ Monument Ave', area: 'Charlestown', lat: 42.3742, lng: -71.0611, noData: true },
+  { id: 'southend', name: 'Tremont St @ W Newton St', area: 'South End', lat: 42.3421, lng: -71.0765, noData: true },
+];
+
+// ---- Demo state ----
+const now = new Date();
+const state = {
+  minutes: now.getHours() * 60 + now.getMinutes(),
+  day: now.getDay(),
+  weekOfMonth: Math.ceil(now.getDate() / 7),
+  snow: false,
+  gameDay: true, // pretend the Sox play tonight — makes the Fenway spot interesting
+  selected: null,
+  votes: {}, // spotId -> 'up' | 'down'
+};
+
+// ---- Rule engine ----
+function fmtTime(mins) {
+  let h = Math.floor(mins / 60), m = mins % 60;
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return m ? `${h}:${String(m).padStart(2,'0')} ${ap}` : `${h} ${ap}`;
+}
+
+function evaluate(spot) {
+  if (spot.noData) return { status: 'unknown' };
+  const { minutes, day, weekOfMonth, snow, gameDay } = state;
+  let verdict = { why: 'No restrictions apply right now — free parking.', cost: 'Free', maxHours: null, activeRule: null };
+
+  for (const r of spot.rules) {
+    const inDays = r.days ? r.days.includes(day) : true;
+    const inTime = (r.start !== undefined) ? (minutes >= r.start && minutes < r.end) : true;
+
+    if (r.type === 'snow_route' && snow) {
+      return { status: 'no', headline: 'Snow emergency — tow zone', why: 'This street is a snow emergency artery. Parking banned until the emergency is lifted. Vehicles are towed.', activeRule: r, cost: '—' };
+    }
+    if (r.type === 'no_parking' && inDays && inTime && (!r.gameDay || gameDay)) {
+      return { status: 'no', headline: `No parking — ${r.reason}`, why: `${r.reason} in effect ${fmtTime(r.start)}–${fmtTime(r.end)}${r.gameDay ? ' (Red Sox home game tonight)' : ''}. You can park after ${fmtTime(r.end)}.`, activeRule: r, cost: '—' };
+    }
+    if (r.type === 'street_cleaning' && inDays && inTime && r.weeks.includes(weekOfMonth)) {
+      return { status: 'no', headline: 'No parking — street cleaning', why: `Street cleaning (${r.side}) today ${fmtTime(r.start)}–${fmtTime(r.end)}, week ${weekOfMonth} of the month. Come back after ${fmtTime(r.end)}.`, activeRule: r, cost: '—' };
+    }
+    if (r.type === 'resident_only' && inDays && inTime) {
+      return { status: 'no', headline: 'Resident permit only', why: `Requires a ${r.permit}. No permit on your vehicle profile — you'd risk a $40 ticket or tow.`, activeRule: r, cost: '—' };
+    }
+    if (r.type === 'meter' && inDays && inTime) {
+      verdict = { why: `Metered now: $${r.ratePerHr.toFixed(2)}/hr, ${r.maxHours} hr max. Pay via meter or ParkBoston app.`, maxHours: r.maxHours, cost: `$${r.ratePerHr.toFixed(2)}/hr`, activeRule: r };
+    }
+    if (r.type === 'time_limit' && inDays && inTime) {
+      verdict = { why: `Free, but ${r.hours} hr limit until ${fmtTime(r.end)}.`, maxHours: r.hours, cost: 'Free', activeRule: r };
+    }
+  }
+  return { status: 'ok', headline: verdict.maxHours ? `Good to go — ${verdict.maxHours} hr max` : 'Good to go', why: verdict.why, cost: verdict.cost, maxHours: verdict.maxHours, activeRule: verdict.activeRule };
+}
+
+function ruleLabel(r) {
+  switch (r.type) {
+    case 'meter': return `Meter $${r.ratePerHr.toFixed(2)}/hr, ${r.maxHours} hr max — ${fmtTime(r.start)}–${fmtTime(r.end)}, ${r.days.map(d=>DAYS[d].slice(0,3)).join(' ')}`;
+    case 'resident_only': return `Resident permit only (${r.permit}) — at all times`;
+    case 'no_parking': return `No parking (${r.reason}) — ${fmtTime(r.start)}–${fmtTime(r.end)}${r.gameDay ? ', game days' : ''}`;
+    case 'street_cleaning': return `Street cleaning (${r.side}) — weeks ${r.weeks.join(' & ')}, ${DAYS[r.days[0]]} ${fmtTime(r.start)}–${fmtTime(r.end)}`;
+    case 'snow_route': return 'Snow emergency artery — no parking during declared snow emergencies';
+    case 'time_limit': return `${r.hours} hr limit — ${fmtTime(r.start)}–${fmtTime(r.end)}, ${r.days.map(d=>DAYS[d].slice(0,3)).join(' ')}`;
+  }
+}
+
+// ---- Fake map pins (design-file chip style, no tile servers) ----
+const BOUNDS = { latMin: 42.328, latMax: 42.382, lngMin: -71.108, lngMax: -71.022 };
+const mapEl = document.getElementById('map');
+const markers = {};
+
+function toPct(lat, lng) {
+  return {
+    x: (lng - BOUNDS.lngMin) / (BOUNDS.lngMax - BOUNDS.lngMin) * 100,
+    y: (BOUNDS.latMax - lat) / (BOUNDS.latMax - BOUNDS.latMin) * 100,
+  };
+}
+
+function pinPrice(spot, v) {
+  if (v.status === 'unknown') return 'add';
+  const meter = spot.rules.find(r => r.type === 'meter');
+  if (v.status === 'no') return 'no';
+  return v.cost === 'Free' ? 'free' : (meter ? `$${meter.ratePerHr.toFixed(2)}` : 'free');
+}
+
+function pinHTML(spot) {
+  const v = evaluate(spot);
+  const badge = v.status === 'unknown' ? 'b-unknown' : (v.status === 'ok' ? 'b-ok' : 'b-no');
+  const glyph = v.status === 'unknown' ? '?' : 'P';
+  return `<span class="chip"><span class="badge ${badge}">${glyph}</span>${pinPrice(spot, v)}</span><span class="tail"></span>`;
+}
+
+SPOTS.forEach(spot => {
+  const { x, y } = toPct(spot.lat, spot.lng);
+  const el = document.createElement('button');
+  el.className = 'fake-pin';
+  el.style.left = x + '%';
+  el.style.top = y + '%';
+  el.innerHTML = pinHTML(spot);
+  el.onclick = () => openSpot(spot.id);
+  mapEl.appendChild(el);
+  markers[spot.id] = el;
+});
+
+function refreshMarkers() {
+  SPOTS.forEach(s => {
+    markers[s.id].innerHTML = pinHTML(s);
+    markers[s.id].classList.toggle('selected', state.selected === s.id);
+  });
+}
+
+// ---- Panel ----
+const panel = document.getElementById('panel');
+const panelScroll = document.getElementById('panel-scroll');
+document.getElementById('panel-close').onclick = closePanel;
+
+function closePanel() {
+  panel.classList.remove('open');
+  state.selected = null;
+  refreshMarkers();
+}
+
+function openSpot(id) {
+  state.selected = id;
+  renderPanel(SPOTS.find(s => s.id === id));
+  panel.classList.add('open');
+  refreshMarkers();
+}
+
+function meterBar(v, invert) {
+  const pct = Math.round(v * 100);
+  const color = invert
+    ? (v > 0.8 ? 'var(--red)' : v > 0.6 ? 'var(--orange)' : 'var(--green)')
+    : (v > 0.8 ? 'var(--green)' : v > 0.6 ? 'var(--orange)' : 'var(--red)');
+  return `<div class="meter"><div style="width:${pct}%;background:${color}"></div></div>`;
+}
+
+function renderPanel(spot) {
+  if (spot.noData) { renderNoData(spot); return; }
+  const v = evaluate(spot);
+  const vote = state.votes[spot.id];
+  const agrees = spot.agrees + (vote === 'up' ? 1 : 0);
+  const disagrees = spot.disagrees + (vote === 'down' ? 1 : 0);
+
+  panelScroll.innerHTML = `
+    <div class="spot-name">${spot.name}</div>
+    <div class="spot-sub">
+      ${spot.area}
+      ${spot.verified ? '<span class="badge-verified">✓ VERIFIED</span>' : ''}
+      <span class="badge-source">Source: ${spot.source}</span>
+    </div>
+
+    <div class="verdict ${v.status === 'ok' ? 'ok' : 'no'}">
+      <div class="icon">${v.status === 'ok' ? 'P' : '✕'}</div>
+      <div>
+        <div class="title">${v.headline}</div>
+        <div class="why">${v.why}</div>
+      </div>
+    </div>
+
+    <div class="sign-wrap">
+      <div>
+        <div class="sign">${spot.sign.map(b => `<div class="s-block ${b.cls}">${b.text}</div>`).join('')}</div>
+        <div class="sign-caption">SIGN PHOTO · PARSED BY CLAUDE</div>
+      </div>
+      <div class="rules-list">
+        <div class="section-h" style="margin-top:0">Rules on this block</div>
+        <ul>
+          ${spot.rules.map(r => `<li class="${v.activeRule === r ? 'active-rule' : ''}">${ruleLabel(r)}${v.activeRule === r ? ' &nbsp;←&nbsp;now' : ''}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><div class="k">Park for</div><div class="v">${v.status === 'ok' ? (v.maxHours ? v.maxHours + ' hrs <small>max</small>' : 'Unlimited') : '—'}</div></div>
+      <div class="fact"><div class="k">Cost right now</div><div class="v">${v.cost}</div></div>
+      <div class="fact"><div class="k">Finding a spot</div><div class="v">${spot.difficulty > 0.85 ? 'Very hard' : spot.difficulty > 0.6 ? 'Moderate' : 'Easy'}</div></div>
+      <div class="fact"><div class="k">Transit</div><div class="v" style="font-size:13px">${spot.transitNote}</div></div>
+    </div>
+
+    <div class="meters">
+      <div class="meter-row"><span class="lbl">Difficulty</span>${meterBar(spot.difficulty, true)}</div>
+      <div class="meter-row"><span class="lbl">Safety</span>${meterBar(spot.safety)}</div>
+      <div class="meter-row"><span class="lbl">Walkability</span>${meterBar(spot.walkability)}</div>
+    </div>
+
+    <div class="vote-box">
+      <div class="q">Was this spot as described?<br><small>${agrees} agree · ${disagrees} disagree</small></div>
+      <button class="vote-btn ${vote === 'up' ? 'voted-up' : ''}" onclick="castVote('${spot.id}','up')">👍 <span>${agrees}</span></button>
+      <button class="vote-btn ${vote === 'down' ? 'voted-down' : ''}" onclick="castVote('${spot.id}','down')">👎 <span>${disagrees}</span></button>
+    </div>
+
+    <div class="section-h">AI summary · Reviews</div>
+    <div class="ai-summary">
+      <div class="tag">AI summary of ${spot.reviews.length} reviews</div>
+      ${spot.aiSummary}
+    </div>
+    ${spot.reviews.map(r => `
+      <div class="review">
+        <span class="who">${r.who}</span> <span class="stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</span>
+        <div>${r.text}</div>
+      </div>`).join('')}
+  `;
+}
+
+function castVote(id, dir) {
+  state.votes[id] = state.votes[id] === dir ? null : dir;
+  renderPanel(SPOTS.find(s => s.id === id));
+}
+
+// ---- No-data flow: upload sign -> Claude parses -> spot goes live ----
+function renderNoData(spot) {
+  panelScroll.innerHTML = `
+    <div class="spot-name">${spot.name}</div>
+    <div class="spot-sub">${spot.area} <span class="badge-source">No data yet</span></div>
+    <div class="nodata">
+      <div class="cam">📷</div>
+      <h3>Nobody's mapped this spot yet</h3>
+      <p>Frame the spot and any signs. Claude will read the sign, extract the rules, and this spot goes live for everyone.</p>
+      <button class="btn-primary" onclick="startParse('${spot.id}')">Upload sign photo</button>
+      <div class="parse-steps" id="parse-steps" style="display:none">
+        <div class="parse-step" id="ps1"><div class="dot">1</div><span>Photo uploaded</span></div>
+        <div class="parse-step" id="ps2"><div class="dot"><span class="spinner"></span></div><span>Claude reading the sign…</span></div>
+        <div class="parse-step" id="ps3"><div class="dot">3</div><span>Extracting rules → database</span></div>
+        <div class="parse-step" id="ps4"><div class="dot">4</div><span>Computing verdict for right now</span></div>
+      </div>
+    </div>
+  `;
+}
+
+function startParse(id) {
+  document.getElementById('parse-steps').style.display = 'block';
+  const on = (n, done) => {
+    const el = document.getElementById('ps' + n);
+    el.classList.add('on');
+    if (done) el.querySelector('.dot').innerHTML = '✓';
+  };
+  setTimeout(() => on(1, true), 300);
+  setTimeout(() => on(2), 700);
+  setTimeout(() => { on(2, true); on(3, true); }, 2100);
+  setTimeout(() => on(4, true), 2700);
+  setTimeout(() => {
+    const spot = SPOTS.find(s => s.id === id);
+    delete spot.noData;
+    Object.assign(spot, {
+      verified: false, source: 'Crowd (just added — by you!)', agrees: 1, disagrees: 0,
+      difficulty: 0.45, safety: 0.85, walkability: 0.8, transitNote: 'Bus nearby',
+      rules: [
+        { type:'time_limit', hours:2, days:[1,2,3,4,5], start:480, end:1080 },
+        { type:'snow_route' },
+      ],
+      sign: [
+        { cls:'s-green s-big', text:'2 HOUR' }, { cls:'s-med', text:'PARKING' },
+        { cls:'s-small', text:'8AM–6PM MON–FRI' }, { cls:'s-red s-small', text:'SNOW EMERGENCY ARTERY' },
+      ],
+      reviews: [{ who:'You', stars:5, text:'First to map this spot 🎉' }],
+      aiSummary: 'Newly mapped spot — rules extracted from your sign photo moments ago. Verdict below reflects current time and weather.',
+    });
+    renderPanel(spot);
+    refreshMarkers();
+  }, 3300);
+}
+
+// ---- Demo controls ----
+const timeSlider = document.getElementById('time-slider');
+const daySelect = document.getElementById('day-select');
+const snowToggle = document.getElementById('snow-toggle');
+const clock = document.getElementById('clock');
+const dayLabel = document.getElementById('day-label');
+const wxBadge = document.getElementById('wx-badge');
+const banner = document.getElementById('context-banner');
+
+timeSlider.value = state.minutes;
+daySelect.value = state.day;
+
+function refreshUI() {
+  clock.textContent = fmtTime(state.minutes);
+  dayLabel.textContent = DAYS[state.day].slice(0, 3);
+  wxBadge.textContent = state.snow ? '24°F · Heavy snow' : '58°F · Clear';
+  if (state.snow) {
+    banner.textContent = '❄ Snow emergency declared — parking banned on emergency arteries';
+    banner.className = 'emergency'; banner.style.display = 'flex';
+  } else if (state.gameDay) {
+    banner.textContent = '⚾ Red Sox play tonight — game-day tow zones active near Fenway after 5 PM';
+    banner.className = ''; banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+  refreshMarkers();
+  if (state.selected) {
+    const spot = SPOTS.find(s => s.id === state.selected);
+    if (!spot.noData) renderPanel(spot);
+  }
+}
+
+timeSlider.oninput = e => { state.minutes = +e.target.value; refreshUI(); };
+daySelect.onchange = e => { state.day = +e.target.value; refreshUI(); };
+snowToggle.onchange = e => { state.snow = e.target.checked; refreshUI(); };
+
+// ---- Search (demo: matches area names) ----
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const q = e.target.value.toLowerCase().trim();
+  const hit = SPOTS.find(s => s.area.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
+  if (hit) openSpot(hit.id);
+});
+
+refreshUI();
+</script>
+</body>
+</html>

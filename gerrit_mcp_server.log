@@ -1,0 +1,21 @@
+2026-09-23 23:26:47,918 - mcp.server.lowlevel.server - DEBUG - Initializing server 'gerrit-mcp-server'
+2026-09-23 23:26:47,918 - mcp.server.lowlevel.server - DEBUG - Registering handler for CallToolRequest
+2026-09-23 23:26:47,919 - mcp.server.lowlevel.server - DEBUG - Registering handler for ListToolsRequest
+2026-09-23 23:26:47,919 - mcp.server.lowlevel.server - DEBUG - Registering handler for PromptListRequest
+2026-09-23 23:26:47,919 - mcp.server.lowlevel.server - DEBUG - Registering handler for GetPromptRequest
+2026-09-23 23:26:47,919 - mcp.server.sse - DEBUG - SseServerTransport initialized with endpoint: /messages/
+2026-09-23 23:26:47,919 - mcp.server.lowlevel.server - DEBUG - Initializing server 'gerrit-mcp-server'
+2026-09-23 23:26:47,919 - mcp.server.lowlevel.server - DEBUG - Registering handler for CallToolRequest
+2026-09-23 23:26:47,919 - mcp.server.lowlevel.server - DEBUG - Registering handler for ListToolsRequest
+2026-09-23 23:26:47,920 - mcp.server.lowlevel.server - DEBUG - Registering handler for PromptListRequest
+2026-09-23 23:26:47,920 - mcp.server.lowlevel.server - DEBUG - Registering handler for GetPromptRequest
+2026-09-23 23:26:47,922 - asyncio - DEBUG - Using selector: EpollSelector
+2026-09-23 23:26:47,927 - mcp.server.lowlevel.server - DEBUG - Received message: root=InitializedNotification(method='notifications/initialized', params=None, jsonrpc='2.0')
+2026-09-23 23:26:47,928 - mcp.server.lowlevel.server - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x7f4284beae50>
+2026-09-23 23:26:47,928 - mcp.server.lowlevel.server - INFO - Processing request of type ListToolsRequest
+2026-09-23 23:26:47,928 - mcp.server.lowlevel.server - DEBUG - Dispatching request of type ListToolsRequest
+2026-09-23 23:26:47,928 - mcp.server.lowlevel.server - DEBUG - Response sent
+2026-09-23 23:26:47,929 - mcp.server.lowlevel.server - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x7f428040dc90>
+2026-09-23 23:26:47,929 - mcp.server.lowlevel.server - INFO - Processing request of type ListPromptsRequest
+2026-09-23 23:26:47,929 - mcp.server.lowlevel.server - DEBUG - Dispatching request of type ListPromptsRequest
+2026-09-23 23:26:47,929 - mcp.server.lowlevel.server - DEBUG - Response sent

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#D9D5CB;}
+*{box-sizing:border-box;}
+a{color:#2F4BFF;text-decoration:none;}
+a:hover{color:#1A2FCC;}
+input::placeholder,textarea::placeholder{color:#8A857A;}
+@keyframes pulse{0%{transform:translate(-50%,-50%) scale(.6);opacity:.7}100%{transform:translate(-50%,-50%) scale(2.6);opacity:0}}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:18px;padding:24px 16px 40px;font-family:'Geist',system-ui,sans-serif;color:#14130F;">
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;background:#F4F1EA;padding:5px;border-radius:18px;max-width:420px;">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="7">
+      <button onClick="{{ t.onClick }}" style="border:0;cursor:pointer;padding:7px 12px;border-radius:999px;font:600 12px 'Geist',sans-serif;background:{{ t.bg }};color:{{ t.fg }};">{{ t.label }}</button>
+    </sc-for>
+  </div>
+
+  <div data-screen-label="Phone" style="width:390px;height:844px;border-radius:56px;background:#14130F;padding:10px;box-shadow:0 30px 60px -20px rgba(20,19,15,.45);flex-shrink:0;">
+    <div style="position:relative;width:100%;height:100%;border-radius:46px;overflow:hidden;background:#EDE9DF;">
+      <div style="position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 36px;z-index:60;font:600 15px 'Geist',sans-serif;pointer-events:none;color:{{ statusColor }};">
+        <span>9:41</span>
+        <div style="width:110px;height:30px;border-radius:20px;background:#000;position:absolute;left:50%;top:10px;transform:translateX(-50%);"></div>
+        <span style="font:600 11px 'Geist Mono',monospace;">5G ●●●</span>
+      </div>
+
+      <sc-if value="{{ isMap }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="01 Map" style="position:absolute;inset:0;">
+          <div style="position:absolute;inset:0;background:#E6E1D5;overflow:hidden;">
+            <div style="position:absolute;left:-12%;top:0;width:22%;height:100%;background:#BFD3DA;transform:skewX(-8deg);"></div>
+            <div style="position:absolute;left:54%;top:60%;width:22%;height:12%;background:#C9D8B6;border-radius:6px;"></div>
+            <div style="position:absolute;left:22%;top:66%;width:20%;height:8%;background:#C9D8B6;border-radius:6px;"></div>
+            <div style="position:absolute;left:0;right:0;top:24%;height:12px;background:#FBF9F4;"></div>
+            <div style="position:absolute;left:0;right:0;top:50%;height:18px;background:#FBF9F4;"></div>
+            <div style="position:absolute;left:0;right:0;top:77%;height:12px;background:#FBF9F4;"></div>
+            <div style="position:absolute;top:0;bottom:0;left:16%;width:12px;background:#FBF9F4;"></div>
+            <div style="position:absolute;top:0;bottom:0;left:47%;width:16px;background:#FBF9F4;"></div>
+            <div style="position:absolute;top:0;bottom:0;left:80%;width:12px;background:#FBF9F4;"></div>
+            <div style="position:absolute;left:34%;top:15%;width:30%;height:22%;border:2px dashed #D9822B;border-radius:10px;background:rgba(217,130,43,.08);"></div>
+            <div style="position:absolute;left:36%;top:34%;font:600 9px 'Geist Mono',monospace;color:#A35F18;letter-spacing:.08em;">TOLL ZONE</div>
+          </div>
+
+          <sc-for list="{{ pins }}" as="p" hint-placeholder-count="6">
+            <button onClick="{{ p.onClick }}" style="position:absolute;left:{{ p.x }}%;top:{{ p.y }}%;transform:translate(-50%,-100%);border:0;background:transparent;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;opacity:{{ p.op }};z-index:{{ p.z }};">
+              <span style="display:flex;align-items:center;gap:5px;padding:5px 8px 5px 5px;border-radius:11px;background:{{ p.bg }};color:{{ p.fg }};font:600 12px 'Geist Mono',monospace;box-shadow:0 4px 10px rgba(20,19,15,.18);white-space:nowrap;">
+                <span style="width:18px;height:18px;border-radius:6px;background:{{ p.badge }};color:#FFF;font:800 11px 'Bricolage Grotesque',sans-serif;display:flex;align-items:center;justify-content:center;">P</span>{{ p.priceShort }}
+              </span>
+              <span style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid {{ p.bg }};"></span>
+            </button>
+          </sc-for>
+
+          <sc-if value="{{ hasDest }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:{{ destX }}%;top:{{ destY }}%;transform:translate(-50%,-100%);z-index:8;display:flex;flex-direction:column;align-items:center;pointer-events:none;">
+              <span style="background:#C8412B;color:#FFF;font:600 11px 'Geist',sans-serif;padding:4px 8px;border-radius:8px;white-space:nowrap;">{{ destName }}</span>
+              <span style="width:3px;height:12px;background:#C8412B;"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:#C8412B;border:2px solid #FFF;margin-top:-2px;"></span>
+            </div>
+          </sc-if>
+
+          <div style="position:absolute;left:50%;top:66%;z-index:5;">
+            <div style="position:absolute;width:22px;height:22px;border-radius:50%;background:#2F4BFF;animation:pulse 1.8s ease-out infinite;"></div>
+            <div style="position:absolute;width:18px;height:18px;border-radius:50%;background:#2F4BFF;border:3px solid #FFF;transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(47,75,255,.5);"></div>
+          </div>
+
+          <div style="position:absolute;top:54px;left:14px;right:14px;z-index:20;display:flex;flex-direction:column;gap:10px;">
+            <div style="position:relative;">
+              <div style="display:flex;align-items:center;gap:10px;background:#FFF;border-radius:16px;padding:0 8px 0 14px;height:50px;box-shadow:0 6px 18px rgba(20,19,15,.12);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14130F" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+                <input value="{{ query }}" onChange="{{ onQuery }}" onFocus="{{ onFocusSearch }}" placeholder="Where are you going?" style="flex:1;border:0;outline:none;font:500 16px 'Geist',sans-serif;background:transparent;color:#14130F;min-width:0;" />
+                <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ clearDest }}" style="border:0;background:#EDE9DF;border-radius:999px;width:28px;height:28px;cursor:pointer;font:600 15px 'Geist',sans-serif;color:#14130F;">×</button>
+                </sc-if>
+              </div>
+              <sc-if value="{{ showSuggest }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:56px;left:0;right:0;background:#FFF;border-radius:16px;box-shadow:0 10px 30px rgba(20,19,15,.18);padding:6px;display:flex;flex-direction:column;z-index:30;">
+                  <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="3">
+                    <button onClick="{{ s.onClick }}" style="border:0;background:transparent;text-align:left;padding:12px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;gap:2px;" style-hover="background:#F4F1EA;">
+                      <span style="font:600 15px 'Geist',sans-serif;color:#14130F;">{{ s.name }}</span>
+                      <span style="font:400 12px 'Geist',sans-serif;color:#6B675E;">{{ s.sub }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex;gap:6px;overflow-x:auto;margin:0 -14px;padding:0 14px 4px;scrollbar-width:none;">
+              <sc-for list="{{ chips }}" as="c" hint-placeholder-count="7">
+                <button onClick="{{ c.onClick }}" style="flex-shrink:0;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};border-radius:999px;padding:8px 12px;font:600 13px 'Geist',sans-serif;cursor:pointer;display:flex;gap:5px;align-items:center;box-shadow:0 2px 6px rgba(20,19,15,.08);white-space:nowrap;">
+                  <span style="opacity:.6;font-weight:500;">{{ c.label }}</span><span>{{ c.value }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ weather }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:10px;align-items:center;background:#14130F;color:#F4F1EA;border-radius:14px;padding:10px 14px;font:500 13px/1.35 'Geist',sans-serif;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9FB2FF" stroke-width="2" stroke-linecap="round"><path d="M7 15a4 4 0 0 1 .5-8 5 5 0 0 1 9.5 1.5A3.5 3.5 0 0 1 17 15H7z"></path><path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3"></path></svg>
+                <span>Rain until 3 PM. Showing covered, high-safety spots outside toll zones.</span>
+              </div>
+            </sc-if>
+          </div>
+
+          <button onClick="{{ locate }}" style="position:absolute;right:14px;bottom:{{ locBottom }}px;z-index:20;width:52px;height:52px;border-radius:16px;border:0;background:{{ locBg }};box-shadow:0 6px 16px rgba(20,19,15,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ locFg }}" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+          </button>
+
+          <div style="position:absolute;left:10px;right:10px;bottom:10px;z-index:20;background:#FFF;border-radius:28px 28px 38px 38px;box-shadow:0 -4px 24px rgba(20,19,15,.12);padding:14px 16px 22px;display:flex;flex-direction:column;gap:12px;">
+            <div style="width:36px;height:4px;border-radius:4px;background:#D9D5CB;align-self:center;"></div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;color:#6B675E;text-transform:uppercase;">{{ nearestLabel }}</span>
+              <span style="font:500 12px 'Geist',sans-serif;color:#6B675E;">{{ matchCount }}</span>
+            </div>
+            <sc-if value="{{ hasNearest }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ openNearest }}" style="border:0;background:transparent;padding:0;text-align:left;cursor:pointer;display:flex;gap:12px;align-items:center;">
+                <div style="width:56px;height:56px;border-radius:14px;background:repeating-linear-gradient(135deg,#E6E1D5 0 6px,#DCD6C8 6px 12px);flex-shrink:0;display:flex;align-items:center;justify-content:center;font:800 22px 'Bricolage Grotesque',sans-serif;color:#14130F;">P</div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;">
+                  <span style="font:700 18px 'Bricolage Grotesque',sans-serif;">{{ nearest.name }}</span>
+                  <span style="font:500 13px 'Geist',sans-serif;color:#6B675E;">{{ nearest.distLabel }} · {{ nearest.priceLabel }} · Safety {{ nearest.safetyLabel }}</span>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14130F" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
+              </button>
+            </sc-if>
+            <sc-if value="{{ noNearest }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                <span style="font:500 14px 'Geist',sans-serif;color:#14130F;">No spots match these filters.</span>
+                <button onClick="{{ resetFilters }}" style="border:0;background:#14130F;color:#FFF;border-radius:999px;padding:9px 14px;font:600 13px 'Geist',sans-serif;cursor:pointer;">Reset</button>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSpot }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="02 Spot detail" style="position:absolute;inset:0;background:#EDE9DF;">
+          <div style="position:absolute;inset:0 0 104px 0;overflow-y:auto;scrollbar-width:none;">
+            <div style="height:230px;background:repeating-linear-gradient(135deg,#DCD6C8 0 10px,#D2CBBB 10px 20px);position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:16px;">
+              <button onClick="{{ backToMap }}" style="position:absolute;top:54px;left:14px;width:40px;height:40px;border-radius:999px;border:0;background:#FFF;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,19,15,.15);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14130F" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg>
+              </button>
+              <span style="font:500 11px 'Geist Mono',monospace;color:#6B675E;">spot photo</span>
+              <span style="background:rgba(20,19,15,.8);color:#FFF;font:600 12px 'Geist',sans-serif;padding:5px 10px;border-radius:999px;white-space:nowrap;">{{ spot.photos }} photos</span>
+            </div>
+            <div style="padding:18px 18px 24px;display:flex;flex-direction:column;gap:18px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <sc-if value="{{ spot.verified }}" hint-placeholder-val="{{ true }}">
+                  <span style="align-self:flex-start;display:flex;align-items:center;gap:6px;background:#DDEBE2;color:#16603F;font:600 12px 'Geist',sans-serif;padding:5px 10px 5px 6px;border-radius:999px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#1F8A5B"><path d="M12 2l2.4 2.1 3.2-.3.7 3.1 2.7 1.7-1.3 2.9 1.3 2.9-2.7 1.7-.7 3.1-3.2-.3L12 22l-2.4-2.1-3.2.3-.7-3.1-2.7-1.7L4.3 12 3 9.1l2.7-1.7.7-3.1 3.2.3z"></path><path d="M8 12l3 3 5-6" stroke="#FFF" stroke-width="2.2" fill="none" stroke-linecap="round"></path></svg>
+                    Verified by {{ spot.owner }}
+                  </span>
+                </sc-if>
+                <h1 style="margin:0;font:800 28px/1.1 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em;">{{ spot.name }}</h1>
+                <span style="font:500 14px 'Geist',sans-serif;color:#6B675E;">{{ spot.addr }} · {{ spot.distLabel }}</span>
+              </div>
+
+              <div style="background:#14130F;color:#F4F1EA;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:8px;">
+                <span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;color:#9FB2FF;">AI SUMMARY · {{ spot.reviewCount }} REVIEWS</span>
+                <p style="margin:0;font:400 15px/1.5 'Geist',sans-serif;text-wrap:pretty;">{{ spot.summary }}</p>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <sc-for list="{{ metrics }}" as="m" hint-placeholder-count="6">
+                  <div style="background:#FFF;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;">
+                    <span style="font:500 12px 'Geist',sans-serif;color:#6B675E;">{{ m.label }}</span>
+                    <span style="font:700 16px 'Geist',sans-serif;">{{ m.value }}</span>
+                    <div style="height:4px;border-radius:4px;background:#EDE9DF;overflow:hidden;"><div style="height:100%;width:{{ m.pct }}%;background:{{ m.color }};"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="background:#FFF;border-radius:20px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <span style="font:600 15px/1.3 'Geist',sans-serif;">Was this spot as described?</span>
+                <div style="display:flex;gap:8px;">
+                  <button onClick="{{ voteUp }}" style="border:1.5px solid {{ upBorder }};background:{{ upBg }};color:{{ upFg }};border-radius:999px;padding:8px 12px;display:flex;gap:6px;align-items:center;font:600 14px 'Geist Mono',monospace;cursor:pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 10v11H3V10h4zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"></path></svg>{{ upCount }}
+                  </button>
+                  <button onClick="{{ voteDown }}" style="border:1.5px solid {{ downBorder }};background:{{ downBg }};color:{{ downFg }};border-radius:999px;padding:8px 12px;display:flex;gap:6px;align-items:center;font:600 14px 'Geist Mono',monospace;cursor:pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="transform:rotate(180deg);"><path d="M7 10v11H3V10h4zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"></path></svg>{{ downCount }}
+                  </button>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <span style="font:700 18px 'Bricolage Grotesque',sans-serif;">Recent reviews</span>
+                <sc-for list="{{ spot.reviews }}" as="r" hint-placeholder-count="2">
+                  <div style="background:#FFF;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;justify-content:space-between;font:600 13px 'Geist',sans-serif;"><span>{{ r.who }} · {{ r.vehicle }}</span><span style="color:{{ r.color }};font-family:'Geist Mono',monospace;">{{ r.verdict }}</span></div>
+                    <p style="margin:0;font:400 14px/1.45 'Geist',sans-serif;color:#3A3730;">{{ r.text }}</p>
+                    <span style="font:500 12px 'Geist',sans-serif;color:#8A857A;">{{ r.when }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:104px;background:#FFF;border-top:1px solid #E0DBCF;padding:12px 16px 30px;display:flex;gap:10px;">
+            <button onClick="{{ openCameraFromSpot }}" style="flex:1;border:1.5px solid #14130F;background:#FFF;color:#14130F;border-radius:18px;font:600 16px 'Geist',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>Upload image
+            </button>
+            <button onClick="{{ startGo }}" style="flex:1;border:0;background:#2F4BFF;color:#FFF;border-radius:18px;font:700 17px 'Geist',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFF"><path d="M12 2l8 19-8-4-8 4z"></path></svg>Go
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isNav }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="03 Guide" style="position:absolute;inset:0;background:#14130F;color:#F4F1EA;display:flex;flex-direction:column;padding:62px 18px 34px;gap:18px;">
+          <button onClick="{{ backToSpot }}" style="align-self:flex-start;border:0;background:#2A2822;color:#F4F1EA;border-radius:999px;padding:8px 14px;font:600 13px 'Geist',sans-serif;cursor:pointer;">← Back</button>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;color:#9FB2FF;">GUIDING YOU TO</span>
+            <h1 style="margin:0;font:800 32px/1.05 'Bricolage Grotesque',sans-serif;">{{ spot.name }}</h1>
+            <span style="font:500 15px 'Geist',sans-serif;color:#B8B2A5;">{{ spot.driveLabel }} drive · {{ spot.distLabel }} · {{ spot.priceLabel }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;background:#2A2822;border-radius:20px;padding:6px 16px;">
+            <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
+              <div style="display:flex;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid #3A3730;">
+                <span style="width:30px;height:30px;border-radius:10px;background:#3A3730;display:flex;align-items:center;justify-content:center;font:700 13px 'Geist Mono',monospace;color:#F4F1EA;flex-shrink:0;">{{ st.n }}</span>
+                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font:600 15px 'Geist',sans-serif;">{{ st.text }}</span><span style="font:500 12px 'Geist',sans-serif;color:#B8B2A5;">{{ st.sub }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:1;"></div>
+          <a href="{{ mapsUrl }}" target="_blank" rel="noopener" style="height:60px;border-radius:18px;background:#2F4BFF;color:#FFF;display:flex;align-items:center;justify-content:center;gap:10px;font:700 17px 'Geist',sans-serif;text-decoration:none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFF"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"></path></svg>Open in Google Maps
+          </a>
+          <button onClick="{{ markParked }}" style="height:56px;border-radius:18px;border:1.5px solid #4A463D;background:transparent;color:#F4F1EA;font:600 16px 'Geist',sans-serif;cursor:pointer;">I've parked here</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isParked }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="04 Parked" style="position:absolute;inset:0;background:#EDE9DF;display:flex;flex-direction:column;padding:62px 18px 34px;gap:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;color:#6B675E;">YOU'RE PARKED</span>
+            <button onClick="{{ endParking }}" style="border:0;background:#FFF;border-radius:999px;padding:8px 14px;font:600 13px 'Geist',sans-serif;cursor:pointer;color:#14130F;">End parking</button>
+          </div>
+          <h1 style="margin:0;font:800 28px/1.1 'Bricolage Grotesque',sans-serif;">{{ parkedSpot.name }}</h1>
+          <div style="background:#FFF;border-radius:24px;padding:22px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+            <div style="position:relative;width:190px;height:190px;">
+              <svg width="190" height="190" viewBox="0 0 200 200" style="transform:rotate(-90deg);"><circle cx="100" cy="100" r="88" fill="none" stroke="#EDE9DF" stroke-width="14"></circle><circle cx="100" cy="100" r="88" fill="none" stroke="{{ ringColor }}" stroke-width="14" stroke-linecap="round" stroke-dasharray="{{ ringDash }}"></circle></svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+                <span style="font:800 38px 'Bricolage Grotesque',sans-serif;">{{ remLabel }}</span>
+                <span style="font:500 13px 'Geist',sans-serif;color:#6B675E;">left</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:24px;font:500 13px 'Geist',sans-serif;color:#6B675E;">
+              <span>Parked <b style="color:#14130F;">{{ parkedAtLabel }}</b></span>
+              <span>Until <b style="color:#14130F;">{{ untilLabel }}</b></span>
+            </div>
+            <button onClick="{{ toggleRemind }}" style="width:100%;border:0;background:#F4F1EA;border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font:600 14px 'Geist',sans-serif;color:#14130F;">
+              Remind me 15 min before
+              <span style="width:44px;height:26px;border-radius:999px;background:{{ remindTrack }};position:relative;display:block;"><span style="position:absolute;top:3px;left:{{ remindKnob }}px;width:20px;height:20px;border-radius:50%;background:#FFF;box-shadow:0 1px 3px rgba(0,0,0,.25);"></span></span>
+            </button>
+          </div>
+          <div style="background:#14130F;color:#F4F1EA;border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:12px;">
+            <span style="font:700 20px 'Bricolage Grotesque',sans-serif;">How was parking here?</span>
+            <span style="font:400 14px/1.45 'Geist',sans-serif;color:#B8B2A5;">Snap the spot and any signage, then rate it. It helps the next driver decide.</span>
+            <button onClick="{{ openCameraFromParked }}" style="height:52px;border:0;border-radius:16px;background:#2F4BFF;color:#FFF;font:700 16px 'Geist',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>Take photo &amp; review
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isCamera }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="05 Camera" style="position:absolute;inset:0;background:#000;display:flex;flex-direction:column;">
+          <div style="flex:1;position:relative;margin-top:50px;background:linear-gradient(180deg,#2A2822 0%,#3A3730 55%,#4A463D 100%);overflow:hidden;">
+            <div style="position:absolute;left:10%;right:10%;bottom:18%;height:26%;border-left:3px solid #E8E2D2;border-right:3px solid #E8E2D2;transform:perspective(300px) rotateX(50deg);opacity:.55;"></div>
+            <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px);background-size:33.33% 33.33%;"></div>
+            <div style="position:absolute;top:16px;left:0;right:0;display:flex;justify-content:center;"><span style="background:rgba(0,0,0,.55);color:#FFF;font:500 13px 'Geist',sans-serif;padding:7px 12px;border-radius:999px;">Frame the spot and any signs</span></div>
+            <div style="position:absolute;top:18%;left:14%;width:34px;height:34px;border-top:3px solid #FFF;border-left:3px solid #FFF;"></div>
+            <div style="position:absolute;top:18%;right:14%;width:34px;height:34px;border-top:3px solid #FFF;border-right:3px solid #FFF;"></div>
+            <div style="position:absolute;bottom:14%;left:14%;width:34px;height:34px;border-bottom:3px solid #FFF;border-left:3px solid #FFF;"></div>
+            <div style="position:absolute;bottom:14%;right:14%;width:34px;height:34px;border-bottom:3px solid #FFF;border-right:3px solid #FFF;"></div>
+          </div>
+          <div style="height:170px;display:flex;align-items:center;justify-content:space-around;padding-bottom:24px;">
+            <button onClick="{{ cancelCamera }}" style="border:0;background:transparent;color:#FFF;font:600 15px 'Geist',sans-serif;cursor:pointer;width:70px;">Cancel</button>
+            <button onClick="{{ shoot }}" style="width:78px;height:78px;border-radius:50%;border:4px solid #FFF;background:transparent;padding:4px;cursor:pointer;"><span style="display:block;width:100%;height:100%;border-radius:50%;background:#FFF;"></span></button>
+            <label style="width:70px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#FFF;font:600 12px 'Geist',sans-serif;cursor:pointer;">
+              <span style="width:44px;height:44px;border-radius:10px;background:#3A3730;border:2px solid #FFF;"></span>Library
+              <input type="file" accept="image/*" capture="environment" onChange="{{ onFile }}" style="display:none;" />
+            </label>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="06 Review" style="position:absolute;inset:0;background:#EDE9DF;">
+          <div style="position:absolute;inset:0 0 104px 0;overflow-y:auto;scrollbar-width:none;padding:58px 18px 24px;display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <button onClick="{{ retake }}" style="border:0;background:#FFF;border-radius:999px;padding:8px 14px;font:600 13px 'Geist',sans-serif;cursor:pointer;color:#14130F;">← Retake</button>
+              <span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;color:#6B675E;">NEW REVIEW</span>
+            </div>
+            <h1 style="margin:0;font:800 26px/1.1 'Bricolage Grotesque',sans-serif;">Rate {{ rvSpot.name }}</h1>
+            <div style="height:170px;border-radius:20px;overflow:hidden;background:repeating-linear-gradient(135deg,#DCD6C8 0 10px,#D2CBBB 10px 20px);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <sc-if value="{{ hasPhotoUrl }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="Your photo" style="width:100%;height:100%;background-size:cover;background-position:center;background-image:{{ photoBg }};"></div></sc-if>
+              <sc-if value="{{ noPhotoUrl }}" hint-placeholder-val="{{ true }}"><span style="font:500 12px 'Geist Mono',monospace;color:#6B675E;">photo captured · 9:41</span></sc-if>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <button onClick="{{ rvUp }}" style="height:56px;border-radius:16px;border:1.5px solid {{ rvUpBorder }};background:{{ rvUpBg }};color:{{ rvUpFg }};font:600 15px 'Geist',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 10v11H3V10h4zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"></path></svg>Good spot
+              </button>
+              <button onClick="{{ rvDown }}" style="height:56px;border-radius:16px;border:1.5px solid {{ rvDownBorder }};background:{{ rvDownBg }};color:{{ rvDownFg }};font:600 15px 'Geist',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="transform:rotate(180deg);"><path d="M7 10v11H3V10h4zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"></path></svg>Not great
+              </button>
+            </div>
+            <sc-for list="{{ rvFields }}" as="fd" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <span style="font:600 14px 'Geist',sans-serif;">{{ fd.label }}</span>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <sc-for list="{{ fd.opts }}" as="o" hint-placeholder-count="4">
+                    <button onClick="{{ o.onClick }}" style="border:1.5px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};border-radius:999px;padding:8px 14px;font:600 13px 'Geist',sans-serif;cursor:pointer;">{{ o.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <textarea value="{{ rvText }}" onChange="{{ onRvText }}" placeholder="Anything drivers should know? Signage, entrance, lighting…" rows="3" style="border:0;border-radius:16px;padding:14px;font:400 15px/1.4 'Geist',sans-serif;background:#FFF;color:#14130F;resize:none;outline:none;"></textarea>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:104px;background:#FFF;border-top:1px solid #E0DBCF;padding:12px 16px 30px;">
+            <button onClick="{{ submit }}" style="width:100%;height:100%;border:0;border-radius:18px;background:{{ submitBg }};color:#FFF;font:700 17px 'Geist',sans-serif;cursor:pointer;">{{ submitLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isThanks }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="07 Thanks" style="position:absolute;inset:0;background:#2F4BFF;color:#FFF;display:flex;flex-direction:column;padding:62px 22px 34px;gap:14px;">
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;">
+            <div style="width:84px;height:84px;border-radius:26px;background:#FFF;display:flex;align-items:center;justify-content:center;">
+              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#2F4BFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+            </div>
+            <h1 style="margin:0;font:800 44px/1 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;">Thanks for the review.</h1>
+            <p style="margin:0;font:400 17px/1.45 'Geist',sans-serif;color:#E3E8FF;text-wrap:pretty;">Your photo and rating for {{ rvSpot.name }} are live. Drivers nearby will see them next time they search.</p>
+          </div>
+          <sc-if value="{{ hasParked }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ toParked }}" style="height:56px;border-radius:18px;border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#FFF;font:600 16px 'Geist',sans-serif;cursor:pointer;">View parking timer</button>
+          </sc-if>
+          <button onClick="{{ backToMap }}" style="height:60px;border-radius:18px;border:0;background:#FFF;color:#2F4BFF;font:700 17px 'Geist',sans-serif;cursor:pointer;">Back to map</button>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;map&quot;,&quot;spot&quot;,&quot;nav&quot;,&quot;parked&quot;,&quot;camera&quot;,&quot;review&quot;,&quot;thanks&quot;],&quot;default&quot;:&quot;map&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;rainAlert&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const SPOTS=[
+{id:'a',name:'Harbor St Garage',addr:'212 Harbor St',owner:'Harbor Parking Co.',x:62,y:46,price:2.5,vehicles:['Car','EV','Motorbike'],maxH:4,safety:4.6,diff:'Easy',covered:true,toll:false,verified:true,up:128,down:9,photos:34,lat:37.7955,lng:-122.3937,
+ summary:'Covered, well-lit garage with a staffed entrance. Drivers praise wide bays and EV chargers on level 2. Fills up after 6 PM on weekdays.',
+ reviews:[{who:'Maya',vehicle:'EV',up:true,text:'Chargers on L2 worked. Easy ramp, bright stairwell.',when:'2 days ago'},{who:'Tom',vehicle:'Car',up:true,text:'Pricey on weekends but felt very safe at night.',when:'1 week ago'}]},
+{id:'b',name:'Pier 3 Surface Lot',addr:'Pier 3, Embarcadero',owner:'',x:40,y:30,price:1.5,vehicles:['Car','Van'],maxH:8,safety:3.8,diff:'Medium',covered:false,toll:true,verified:false,up:61,down:17,photos:12,lat:37.7985,lng:-122.3977,
+ summary:'Cheap all-day lot inside the congestion toll zone. Open-air and exposed in rain. Tight turns at the back row.',
+ reviews:[{who:'Jin',vehicle:'Van',up:true,text:'Fit my van fine, back row is tight.',when:'3 days ago'},{who:'Sara',vehicle:'Car',up:false,text:'Forgot about the toll zone. Added $8 to my trip.',when:'2 weeks ago'}]},
+{id:'c',name:'Oak Ave Street Parking',addr:'Oak Ave, 400 block',owner:'',x:22,y:58,price:0,vehicles:['Car','Motorbike'],maxH:2,safety:3.4,diff:'Hard',covered:false,toll:false,verified:false,up:44,down:22,photos:7,lat:37.7925,lng:-122.4025,
+ summary:'Free 2-hour street parking. Parallel only and usually full by 10 AM. Street cleaning Tuesdays 8–10 AM.',
+ reviews:[{who:'Leo',vehicle:'Motorbike',up:true,text:'Always room for a bike near the corner.',when:'Yesterday'},{who:'Ana',vehicle:'Car',up:false,text:'Circled 15 minutes. Got a ticket for cleaning day.',when:'5 days ago'}]},
+{id:'d',name:'Civic Center Underground',addr:'355 McAllister St',owner:'City of SF Parking',x:70,y:84,price:3.5,vehicles:['Car','EV','Van'],maxH:12,safety:4.8,diff:'Easy',covered:true,toll:false,verified:true,up:210,down:11,photos:58,lat:37.7808,lng:-122.4177,
+ summary:'Large secure underground garage with 24/7 security and cameras. Best choice in bad weather. Tall-vehicle entrance on Polk St.',
+ reviews:[{who:'Priya',vehicle:'Van',up:true,text:'High-clearance entrance on Polk, no stress.',when:'4 days ago'},{who:'Dev',vehicle:'EV',up:true,text:'Dry, safe, and 6 chargers.',when:'1 week ago'}]},
+{id:'e',name:'Market Row Moto Bay',addr:'Market Row & 2nd',owner:'',x:54,y:29,price:1,vehicles:['Motorbike'],maxH:3,safety:4.1,diff:'Easy',covered:false,toll:true,verified:false,up:38,down:3,photos:5,lat:37.7890,lng:-122.4010,
+ summary:'Dedicated motorbike bay with lock rails. Inside the toll zone. Busy at lunch but turnover is quick.',
+ reviews:[{who:'Kai',vehicle:'Motorbike',up:true,text:'Lock rails are solid, well lit.',when:'3 days ago'},{who:'Rin',vehicle:'Motorbike',up:true,text:'Always a spot after 2 PM.',when:'2 weeks ago'}]},
+{id:'f',name:'St. Linden Church Lot',addr:'80 Linden St',owner:'St. Linden Parish',x:86,y:63,price:2,vehicles:['Car'],maxH:2,safety:4.2,diff:'Medium',covered:false,toll:false,verified:true,up:73,down:6,photos:15,lat:37.7760,lng:-122.4230,
+ summary:'Owner-run lot open to the public on weekdays. Closed Sundays. Quiet and gated after dark.',
+ reviews:[{who:'Ben',vehicle:'Car',up:true,text:'Friendly attendant, pay by app.',when:'6 days ago'},{who:'Lia',vehicle:'Car',up:true,text:'Narrow gate but plenty of room inside.',when:'3 weeks ago'}]}];
+const PLACES=[{name:'Ferry Building',sub:'1 Ferry Building · 0.9 km',x:58,y:38},{name:'City Hall',sub:'1 Dr Carlton B Goodlett Pl · 1.4 km',x:74,y:88},{name:'Oak Ave Market',sub:'410 Oak Ave · 0.6 km',x:18,y:54}];
+const V=['Any','Car','Motorbike','EV','Van'],D=[['Any',0],['1h+',1],['2h+',2],['4h+',4]],S=[['Any',0],['3.5+',3.5],['4.5+',4.5]],C=[['Any',99],['Free',0],['≤ $2/h',2],['≤ $4/h',4]],K=[['Any',3],['Easy',1],['Easy–Med',2]];
+const RANK={Easy:1,Medium:2,Hard:3};
+const ORIGIN={x:50,y:66};
+const INK='#14130F',BLUE='#2F4BFF',GREEN='#1F8A5B',AMBER='#D9822B',RED='#C8412B';
+const fmtT=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+
+class Component extends DCLogic {
+  state={screen:'map',sel:'a',f:{v:0,d:0,s:0,c:0,k:0},weather:false,noToll:false,query:'',focus:false,dest:null,votes:{},parked:null,remind:true,now:Date.now(),photoUrl:null,rvId:'a',rv:{vote:null,safety:null,diff:null,cost:null},rvText:'',locating:false};
+  componentDidMount(){
+    const p=this.props;
+    this.setState({screen:p.startScreen||'map',weather:!!p.rainAlert});
+    this.t=setInterval(()=>this.setState({now:Date.now()}),30000);
+  }
+  componentWillUnmount(){clearInterval(this.t);}
+  go(s,extra){this.setState({screen:s,...(extra||{})});}
+  decorate(sp,ref){
+    const m=Math.round(Math.hypot((sp.x-ref.x)*6,(sp.y-ref.y)*13.4));
+    return {...sp,dist:m,distLabel:m<1000?m+' m':(m/1000).toFixed(1)+' km',driveLabel:Math.max(1,Math.ceil(m/250))+' min',
+      priceLabel:sp.price?'$'+sp.price.toFixed(2)+'/h':'Free',priceShort:sp.price?'$'+sp.price:'Free',safetyLabel:sp.safety.toFixed(1),reviewCount:sp.up+sp.down,
+      reviews:sp.reviews.map(r=>({...r,verdict:r.up?'▲ Good':'▼ Poor',color:r.up?GREEN:RED}))};
+  }
+  matches(sp){
+    const {f,weather,noToll}=this.state;
+    return (f.v===0||sp.vehicles.includes(V[f.v]))&&sp.maxH>=D[f.d][1]&&sp.safety>=S[f.s][1]&&sp.price<=C[f.c][1]&&RANK[sp.diff]<=K[f.k][1]
+      &&(!weather||(sp.covered&&sp.safety>=4))&&(!(noToll||weather)||!sp.toll);
+  }
+  renderVals(){
+    const st=this.state,sc=st.screen;
+    const ref=st.dest||ORIGIN;
+    const all=SPOTS.map(s=>this.decorate(s,ref));
+    const ok=all.filter(s=>this.matches(s)).sort((a,b)=>a.dist-b.dist);
+    const nearest=ok[0];
+    const spot=all.find(s=>s.id===st.sel);
+    const rvSpot=all.find(s=>s.id===st.rvId)||spot;
+    const pk=st.parked||{id:st.sel,at:st.now-25*60000};
+    const parkedSpot=all.find(s=>s.id===pk.id);
+    const total=parkedSpot.maxH*3600000,until=pk.at+total,rem=Math.max(0,until-st.now);
+    const remH=Math.floor(rem/3600000),remM=Math.floor(rem%3600000/60000);
+    const Circ=2*Math.PI*88,frac=rem/total;
+    const setF=(k,n)=>this.setState(s=>({f:{...s.f,[k]:(s.f[k]+1)%n}}));
+    const cyc=(label,k,arr)=>{const i=st.f[k],on=i>0;return {label,value:Array.isArray(arr[i])?arr[i][0]:arr[i],onClick:()=>setF(k,arr.length),bg:on?INK:'#FFF',fg:on?'#FFF':INK,border:on?INK:'#FFF'};};
+    const tog=(label,on,fn)=>({label:'',value:label,onClick:fn,bg:on?BLUE:'#FFF',fg:on?'#FFF':INK,border:on?BLUE:'#FFF'});
+    const chips=[
+      tog('Bad weather',st.weather,()=>this.setState(s=>({weather:!s.weather}))),
+      tog('Avoid tolls',st.noToll||st.weather,()=>this.setState(s=>({noToll:!s.noToll}))),
+      cyc('Vehicle','v',V),cyc('Stay','d',D),cyc('Safety','s',S),cyc('Cost','c',C),cyc('Difficulty','k',K)];
+    const pins=all.map(p=>{const m=this.matches(p),isN=nearest&&p.id===nearest.id;
+      return {...p,op:m?1:.3,z:isN?12:m?10:6,bg:isN?INK:'#FFF',fg:isN?'#FFF':INK,badge:p.safety>=4.5?GREEN:p.safety>=4?BLUE:AMBER,
+        onClick:()=>this.go('spot',{sel:p.id})};});
+    const q=st.query.trim().toLowerCase();
+    const suggestions=PLACES.filter(p=>!q||p.name.toLowerCase().includes(q)).map(p=>({...p,onClick:()=>this.setState({dest:p,query:p.name,focus:false})}));
+    const vote=st.votes[st.sel]||null;
+    const vs=(on,col)=>({b:on?col:'#D9D5CB',bg:on?col:'#FFF',fg:on?'#FFF':INK});
+    const up=vs(vote==='up',GREEN),dn=vs(vote==='down',RED);
+    const setVote=v=>this.setState(s=>({votes:{...s.votes,[s.sel]:s.votes[s.sel]===v?null:v}}));
+    const metrics=[
+      {label:'Vehicles',value:spot.vehicles.join(' · '),pct:spot.vehicles.length/4*100,color:INK},
+      {label:'Max stay',value:spot.maxH+' hours',pct:Math.min(100,spot.maxH/12*100),color:INK},
+      {label:'Safety',value:spot.safetyLabel+' / 5',pct:spot.safety/5*100,color:spot.safety>=4.5?GREEN:spot.safety>=4?BLUE:AMBER},
+      {label:'Cost',value:spot.priceLabel,pct:Math.max(6,spot.price/4*100),color:INK},
+      {label:'Difficulty',value:spot.diff,pct:RANK[spot.diff]/3*100,color:[0,GREEN,AMBER,RED][RANK[spot.diff]]},
+      {label:'Weather',value:spot.covered?'Covered':'Open-air',pct:spot.covered?100:15,color:spot.covered?GREEN:AMBER}];
+    const rv=st.rv;
+    const setRv=(k,v)=>this.setState(s=>({rv:{...s.rv,[k]:s.rv[k]===v?null:v}}));
+    const field=(label,k,opts)=>({label,opts:opts.map(o=>{const on=rv[k]===o;return {label:o,onClick:()=>setRv(k,o),bg:on?INK:'#FFF',fg:on?'#FFF':INK,border:on?INK:'#FFF'};})});
+    const ru=vs(rv.vote==='up',GREEN),rd=vs(rv.vote==='down',RED);
+    const openCam=id=>this.go('camera',{rvId:id,photoUrl:null,rv:{vote:null,safety:null,diff:null,cost:null},rvText:''});
+    const tabs=[['map','Map'],['spot','Spot'],['nav','Guide'],['parked','Parked'],['camera','Camera'],['review','Review'],['thanks','Thanks']]
+      .map(([k,l])=>({label:l,onClick:()=>this.go(k),bg:sc===k?INK:'transparent',fg:sc===k?'#FFF':INK}));
+    return {
+      tabs,isMap:sc==='map',isSpot:sc==='spot',isNav:sc==='nav',isParked:sc==='parked',isCamera:sc==='camera',isReview:sc==='review',isThanks:sc==='thanks',
+      statusColor:(sc==='nav'||sc==='camera'||sc==='thanks')?'#FFF':INK,
+      pins,chips,weather:st.weather,query:st.query,hasQuery:!!st.query,
+      onQuery:e=>this.setState({query:e.target.value,focus:true}),onFocusSearch:()=>this.setState({focus:true}),
+      showSuggest:st.focus&&suggestions.length>0,suggestions,
+      clearDest:()=>this.setState({dest:null,query:'',focus:false}),
+      hasDest:!!st.dest,destX:st.dest?st.dest.x:0,destY:st.dest?st.dest.y:0,destName:st.dest?st.dest.name:'',
+      locate:()=>{this.setState({dest:null,query:'',focus:false,locating:true});setTimeout(()=>this.setState({locating:false}),900);},
+      locBg:st.locating?BLUE:'#FFF',locFg:st.locating?'#FFF':BLUE,locBottom:186,
+      nearestLabel:st.dest?'Nearest to '+st.dest.name:'Nearest to you',matchCount:ok.length+' of '+all.length+' spots',
+      hasNearest:!!nearest,noNearest:!nearest,nearest:nearest||{},openNearest:()=>nearest&&this.go('spot',{sel:nearest.id}),
+      resetFilters:()=>this.setState({f:{v:0,d:0,s:0,c:0,k:0},weather:false,noToll:false}),
+      spot,metrics,upCount:spot.up+(vote==='up'?1:0),downCount:spot.down+(vote==='down'?1:0),
+      upBorder:up.b,upBg:up.bg,upFg:up.fg,downBorder:dn.b,downBg:dn.bg,downFg:dn.fg,
+      voteUp:()=>setVote('up'),voteDown:()=>setVote('down'),
+      backToMap:()=>this.go('map'),backToSpot:()=>this.go('spot'),
+      openCameraFromSpot:()=>openCam(st.sel),openCameraFromParked:()=>openCam(pk.id),
+      startGo:()=>this.go('nav'),
+      steps:[{n:'1',text:'Head north on Main St',sub:'120 m'},{n:'2',text:'Turn right onto '+spot.addr.replace(/^\d+\s/,''),sub:Math.round(spot.dist*.6)+' m'},{n:'3',text:'Entrance on your '+(spot.x>50?'right':'left'),sub:spot.diff+' parking · '+spot.maxH+' h max'}],
+      mapsUrl:'https://www.google.com/maps/dir/?api=1&destination='+spot.lat+','+spot.lng+'&travelmode=driving',
+      markParked:()=>this.go('parked',{parked:{id:st.sel,at:Date.now()},now:Date.now()}),
+      parkedSpot,remLabel:remH+'h '+String(remM).padStart(2,'0')+'m',parkedAtLabel:fmtT(pk.at),untilLabel:fmtT(until),
+      ringDash:(Circ*frac)+' '+Circ,ringColor:frac<.15?RED:BLUE,
+      remindTrack:st.remind?BLUE:'#D9D5CB',remindKnob:st.remind?21:3,toggleRemind:()=>this.setState(s=>({remind:!s.remind})),
+      endParking:()=>this.go('map',{parked:null}),hasParked:!!st.parked,toParked:()=>this.go('parked'),
+      cancelCamera:()=>this.go(st.parked?'parked':'spot'),shoot:()=>this.go('review'),
+      onFile:e=>{const fl=e.target.files&&e.target.files[0];if(fl)this.go('review',{photoUrl:URL.createObjectURL(fl)});},
+      rvSpot,hasPhotoUrl:!!st.photoUrl,noPhotoUrl:!st.photoUrl,photoBg:st.photoUrl?'url('+st.photoUrl+')':'none',retake:()=>this.go('camera'),
+      rvUp:()=>setRv('vote','up'),rvDown:()=>setRv('vote','down'),
+      rvUpBorder:ru.b,rvUpBg:ru.bg,rvUpFg:ru.fg,rvDownBorder:rd.b,rvDownBg:rd.bg,rvDownFg:rd.fg,
+      rvFields:[field('Safety','safety',['1','2','3','4','5']),field('Parking difficulty','diff',['Easy','Medium','Hard']),field('Cost','cost',['Free','As listed','Higher than listed']),field('Your vehicle','veh',['Car','Motorbike','EV','Van'])],
+      rvText:st.rvText,onRvText:e=>this.setState({rvText:e.target.value}),
+      submitBg:rv.vote?BLUE:'#A8A396',submitLabel:rv.vote?'Submit review':'Choose good or not great',
+      submit:()=>{if(!rv.vote)return;this.setState(s=>({screen:'thanks',votes:{...s.votes,[s.rvId]:rv.vote}}));}
+    };
+  }
+}
+</script>
+</body>
+</html>
